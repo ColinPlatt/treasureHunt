@@ -4,7 +4,8 @@ pragma solidity ^0.8.13;
 import {ERC721}    from 'solmate/tokens/ERC721.sol';
 import {Auth, Authority}       from 'solmate/auth/Auth.sol';
 
-contract treasureHunt is ERC721, Auth {
+// add requiresAuth
+contract treasureHunt is ERC721 {
 
     uint256 internal immutable INITIAL_CHAIN_ID;
 
@@ -33,16 +34,16 @@ contract treasureHunt is ERC721, Auth {
     mapping(address => bool) public managers;
 
     ////////////////////////////////////////////// EVENTS //////////////////////////////////////////
-    event NEW_CHALLENGE(uint256 indexed challengeId, string name, bool rovakeable);
-    event CHALLENGE_UPDATED(uint256 indexed challengeId, string name, bool rovakeable);
+    event NEW_CHALLENGE(uint256 indexed challengeId, string name, bool revokeable);
+    event CHALLENGE_UPDATED(uint256 indexed challengeId, string name, bool revokeable);
     event NEW_CLAIM(uint256 indexed tokenId, uint256 challengeId);
     event BADGE_REVOKED(uint256 indexed tokenId, uint256 challengeId);
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////// CONSTRUCTOR /////////////////////////////////////////
-        constructor(Authority _authority)
+        constructor(/*Authority _authority*/)
         ERC721("treasureHunt", "HUNT")
-        Auth(msg.sender, _authority) 
+        /* Auth(msg.sender, _authority) */ 
     {
         managers[msg.sender] = true;
         INITIAL_CHAIN_ID = block.chainid;
@@ -51,7 +52,7 @@ contract treasureHunt is ERC721, Auth {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////// USER FUNCTIONS ///////////////////////////////////////
-    uint256 constant MINT_PRICE = 0.01 ether;
+    uint256 constant MINT_PRICE = 0.0 ether;
     uint256 private nextId;
 
     // There is no limit to the number of treasureHunts that can be minted, but there is a cost to mint, 
@@ -98,12 +99,12 @@ contract treasureHunt is ERC721, Auth {
             address recoveredAddress = ecrecover(
                 keccak256(
                     abi.encodePacked(
-                        "\x19\x01",
+                        hex'1901',
                         DOMAIN_SEPARATOR(),
                         keccak256(
                             abi.encode(
                                 keccak256(
-                                    "Claim(address manager,uint256 tokenId,uint256 challengeId,uint256 nonce,uint256 deadline)"
+                                    "PermitClaim(address manager,uint256 tokenId,uint256 challengeId,uint256 nonce,uint256 deadline)"
                                 ),
                                 manager,
                                 tokenId,
@@ -157,22 +158,32 @@ contract treasureHunt is ERC721, Auth {
     uint256 constant CHALLENGE_PRICE = 0.1 ether;
 
     // challenge managers can be "onboarded" by the contract owner, this gives them permission to create free challenges
-    function addManager(address newManager) external requiresAuth {
+    // add requiresAuth
+    function addManager(address newManager) external {
 
     }
 
-    function removeManager(address oldManager) external requiresAuth {
+    // add requiresAuth
+    function removeManager(address oldManager) external {
         
     }
 
-    function addChallenge(CHALLENGE memory newChallenge) payable external requiresAuth {
+    // add requiresAuth
+    function addChallenge(CHALLENGE memory newChallenge) payable external {
         require(msg.value >= CHALLENGE_PRICE || managers[msg.sender], "INSUFFICIENT CHALLENGE LOG PAYMENT");
 
+        uint256 challengeId = challenges.length;
+
+        challenges.push(newChallenge);
+
+        emit NEW_CHALLENGE(challengeId, newChallenge.name, newChallenge.revokeable);
 
 
     }
 
-    function revokeBadge(uint256 tokenId, uint256 challengeId) external requiresAuth {
+    // add requiresAuth
+    function revokeBadge(uint256 tokenId, uint256 challengeId) external {
+
 
     }
 
@@ -180,7 +191,8 @@ contract treasureHunt is ERC721, Auth {
 
     ////////////////////////////// TREASURY MANAGEMENT FUNCTIONS ///////////////////////////////////
 
-    function withdrawTresury() external requiresAuth {
+    // add requiresAuth
+    function withdrawTresury() external {
 
     }
 
