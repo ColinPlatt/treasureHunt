@@ -18,14 +18,14 @@ contract treasureHunt is ERC721 {
         address manager;
         bytes3[] palette; // index of colors for the pixel image
         bytes pixels;  // pixels are tightly packed bits to the index colours
-        bool revokeable; // challenges can be revokable, meaning that a manager can take away the badge from a user if they violate some rule related to the badge
+        bool revokeable; // challenges can be revokeable, meaning that a manager can take away the badge from a user if they violate some rule related to the badge | @TODO implement more revoke types? 0 - non-revokeable, 1 - discretionary, 2 - revoke on transfer; would likely require moving back to an array
         uint160 nonce; // nonce for EIP-712 logic
     }
 
-    CHALLENGE[] challenges;
+    CHALLENGE[] public challenges;
 
-    //completedChallenges[id][challenges[]]
-    mapping(uint256 => uint256[]) public completedChallenges;
+    //badges[id][challenges][completed_flag]
+    mapping(uint256 => mapping(uint256 => bool)) public badges;
 
     //challengeDisplayOrder[id][challengeId]
     mapping(uint256 => uint256[10]) public challengeDisplayOrder;
@@ -36,7 +36,7 @@ contract treasureHunt is ERC721 {
     ////////////////////////////////////////////// EVENTS //////////////////////////////////////////
     event NEW_CHALLENGE(uint256 indexed challengeId, string name, bool revokeable);
     event CHALLENGE_UPDATED(uint256 indexed challengeId, string name, bool revokeable);
-    event NEW_CLAIM(uint256 indexed tokenId, uint256 challengeId);
+    event NEW_BADGE(uint256 indexed tokenId, uint256 challengeId);
     event BADGE_REVOKED(uint256 indexed tokenId, uint256 challengeId);
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -52,7 +52,7 @@ contract treasureHunt is ERC721 {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////// USER FUNCTIONS ///////////////////////////////////////
-    uint256 constant MINT_PRICE = 0.0 ether;
+    uint256 constant MINT_PRICE = 0.01 ether;
     uint256 private nextId;
 
     // There is no limit to the number of treasureHunts that can be minted, but there is a cost to mint, 
@@ -122,7 +122,9 @@ contract treasureHunt is ERC721 {
 
             require(recoveredAddress != address(0) && recoveredAddress == manager, "INVALID_SIGNER");
 
-            completedChallenges[tokenId].push(challengeId);
+            badges[tokenId][challengeId] = true;
+
+            emit NEW_BADGE(tokenId, challengeId);
         }
     }
 
@@ -143,12 +145,30 @@ contract treasureHunt is ERC721 {
             );
     }
 
+    // NFT holders can always dismiss badges from their token, even for non revokeable badges
+    function dismissBadge(uint256 tokenId, uint256 challengeId) public {
+        require(msg.sender == ownerOf(tokenId), "INVALID_CALLER");
+
+        badges[tokenId][challengeId] = false;
+
+        emit BADGE_REVOKED(tokenId, challengeId);
+
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////// VIEW FUNCTIONS ///////////////////////////////////////
 
     function tokenURI(uint256 id) public view override returns (string memory) {
         return 's';
+    }
+
+    function challengeCount() public view returns (uint256) {
+        return challenges.length;
+    }
+
+    function checkBadgeStatus(uint256 tokenId, uint256 challengeId) public view returns (bool) {
+        return badges[tokenId][challengeId];
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -183,7 +203,11 @@ contract treasureHunt is ERC721 {
 
     // add requiresAuth
     function revokeBadge(uint256 tokenId, uint256 challengeId) external {
+        require(msg.sender == challenges[challengeId].manager && challenges[challengeId].revokeable, "REVOKE ERROR");
 
+        badges[tokenId][challengeId] = false;
+
+        emit BADGE_REVOKED(tokenId, challengeId);
 
     }
 
