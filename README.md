@@ -15,3 +15,9 @@ Outside of managing token claims, treasureHunt can also be used for selective ga
 treasureHunt is open and composable making it a great framework for a myriad of use cases both on and offchain that require access controls.
 
 ## Goals of treasureHunt
+
+treasureHunt aims to become an open hub for certificates, widely accepted and used by projects looking to modify their access controls based on onchain data.
+
+Using treasureHunt allows token holders, challenge managers and certificate consumers to reduce the complexity of managing onchain access controls. This is achieved by the implementation of badges (certificates) in a single contract address. By using treasureHunt token holders have fewer tokens and contract interactions to manage. Greater use and acceptance of common criteria can also yield global gas savings by reducing the number of complex MerkleDrop transactions and eliminating the need for one-off mint passes. treasureHunt also leans on the bearer nature of Ethereum itself, and does not seek to create an identity solution. treasureHunt tokens can be transferred freely across wallets and addresses, allowing for greater composibility and control whilst removing the need for immutable identity tying a wallet to an entity.
+
+By managing certificates in a single contract address, certificate consumers and token holders reduce data fragmentation and the need to index countless individual access controls and tokens. In doing so, token holders have a more simplified user experience and become less exposed to potentially fradulent and exploitative tokens dropped to their wallet.
